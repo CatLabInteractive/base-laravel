@@ -1,0 +1,19 @@
+{
+    "name": "catlabinteractive/base-laravel",
+    "description": "Transformer between catlab base and laravel.",
+    "type": "library",
+    "require": {
+        "catlabinteractive/base": "^0.1"
+    },
+    "require-dev": {
+        "laravel/framework": "5.2.*"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Thijs Van der Schaeghe",
+            "email": "info@catlab.be"
+        }
+    ],
+    "minimum-stability": "stable"
+}
