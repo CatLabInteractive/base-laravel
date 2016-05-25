@@ -38,35 +38,30 @@ class SelectQueryTransformer
     }
 
     /**
-     * @param Builder $laravelQueryBuilder
+     * @param Builder $query
      * @param WhereParameter[] $whereParameters
      */
-    private static function processWhereParameters($laravelQueryBuilder, $whereParameters)
+    private static function processWhereParameters($query, $whereParameters)
     {
         foreach ($whereParameters as $where) {
+            /** @var Builder $query */
+            if ($comparison = $where->getComparison()) {
+                $query->where($comparison->getSubject(), $comparison->getOperator(), $comparison->getValue());
+            }
 
-            /** @var WhereParameter $where */
-            $laravelQueryBuilder->where(function ($query) use ($where) {
-
-                /** @var Builder $query */
-                if ($comparison = $where->getComparison()) {
-                    $query->where($comparison->getSubject(), $comparison->getOperator(), $comparison->getValue());
+            foreach ($where->getChildren() as $child) {
+                if ($child instanceof AndConjunction) {
+                    $query->where(function ($query) use ($child) {
+                        self::processWhereParameters($query, [$child->getSubject()]);
+                    });
+                } elseif ($child instanceof OrConjunction) {
+                    $query->orWhere(function ($query) use ($child) {
+                        self::processWhereParameters($query, [$child->getSubject()]);
+                    });
+                } else {
+                    throw new \InvalidArgumentException("Got an unknown conjunction");
                 }
-
-                foreach ($where->getChildren() as $child) {
-                    if ($child instanceof AndConjunction) {
-                        $query->where(function ($query) use ($child) {
-                            self::processWhereParameters($query, [$child->getSubject()]);
-                        });
-                    } elseif ($child instanceof OrConjunction) {
-                        $query->orWhere(function ($query) use ($child) {
-                            self::processWhereParameters($query, [$child->getSubject()]);
-                        });
-                    } else {
-                        throw new \InvalidArgumentException("Got an unknown conjunction");
-                    }
-                }
-            });
+            }
         }
     }
 }
