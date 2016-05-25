@@ -12,7 +12,7 @@ use Illuminate\Database\Query\Builder;
  * Class QueryTransformer
  * @package CatLab\Laravel\Database
  */
-class QueryTransformer
+class SelectQueryTransformer
 {
     /**
      * @param Builder $laravelQueryBuilder
