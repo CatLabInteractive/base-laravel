@@ -15,5 +15,9 @@
             "email": "info@catlab.be"
         }
     ],
-    "minimum-stability": "stable"
+    "autoload": {
+        "psr-4" : {
+            "CatLab\\Laravel\\" : "src/CatLab/Laravel"
+        }
+    }
 }

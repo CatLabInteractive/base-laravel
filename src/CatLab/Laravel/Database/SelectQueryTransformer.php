@@ -9,7 +9,7 @@ use CatLab\Base\Interfaces\Grammar\OrConjunction;
 use Illuminate\Database\Query\Builder;
 
 /**
- * Class QueryTransformer
+ * Class SelectQueryTransformer
  * @package CatLab\Laravel\Database
  */
 class SelectQueryTransformer
