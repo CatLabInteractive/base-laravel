@@ -1,6 +1,7 @@
 <?php
 
 use CatLab\Base\Enum\Operator;
+use CatLab\Base\Models\Database\DB;
 use CatLab\Base\Models\Database\SelectQueryParameters;
 use CatLab\Base\Models\Database\WhereParameter;
 use CatLab\Laravel\Database\SelectQueryTransformer;
@@ -38,6 +39,30 @@ class SelectQueryTransformerTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             'select * from "table" where "foo" = ? or ("bar" < ? and ("cat" != ?))',
+            $builder->toSql()
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function testRawContent()
+    {
+        $selectQuery = new SelectQueryParameters();
+
+        $selectQuery->where(
+            (new WhereParameter('foo', Operator::EQ, 'bar'))
+                ->or(
+                    (new WhereParameter(DB::raw('COUNT(bar)'), Operator::LT, 15))
+                        ->and(new WhereParameter('cat', Operator::NEQ, 'catlab'))
+                )
+        );
+
+        $builder = $this->getQueryBuilder();
+        SelectQueryTransformer::toLaravel($builder, $selectQuery);
+
+        $this->assertEquals(
+            'select * from "table" where "foo" = ? or (COUNT(bar) < ? and ("cat" != ?))',
             $builder->toSql()
         );
     }

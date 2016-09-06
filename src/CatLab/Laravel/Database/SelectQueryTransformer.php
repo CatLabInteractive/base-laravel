@@ -9,8 +9,6 @@ use CatLab\Base\Interfaces\Grammar\OrConjunction;
 use CatLab\Base\Interfaces\Parameters\Raw;
 use Illuminate\Database\Query\Builder;
 
-use DB;
-
 /**
  * Class SelectQueryTransformer
  * @package CatLab\Laravel\Database
@@ -27,7 +25,7 @@ class SelectQueryTransformer
 
         foreach ($filter->getSort() as $sort) {
             $laravelQueryBuilder->orderBy(
-                self::translateParameter($sort->getColumn()),
+                self::translateParameter($laravelQueryBuilder, $sort->getColumn()),
                 $sort->getDirection()
             );
         }
@@ -53,9 +51,9 @@ class SelectQueryTransformer
             /** @var Builder $query */
             if ($comparison = $where->getComparison()) {
                 $query->where(
-                    self::translateParameter($comparison->getSubject()),
+                    self::translateParameter($query, $comparison->getSubject()),
                     $comparison->getOperator(),
-                    self::translateParameter($comparison->getValue())
+                    self::translateParameter($query, $comparison->getValue())
                 );
             }
 
@@ -76,13 +74,14 @@ class SelectQueryTransformer
     }
 
     /**
+     * @param Builder $laravelQueryBuilder
      * @param $parameter
      * @return mixed
      */
-    private static function translateParameter($parameter)
+    private static function translateParameter($laravelQueryBuilder, $parameter)
     {
         if ($parameter instanceof Raw) {
-            return DB::raw($parameter->__toString());
+            return $laravelQueryBuilder->raw($parameter->__toString());
         } else {
             return $parameter;
         }
