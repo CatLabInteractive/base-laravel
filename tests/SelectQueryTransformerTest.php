@@ -46,6 +46,8 @@ class SelectQueryTransformerTest extends PHPUnit_Framework_TestCase
     /**
      * @test
      */
+
+    /*
     public function testRawContent()
     {
         $selectQuery = new SelectQueryParameters();
@@ -65,7 +67,7 @@ class SelectQueryTransformerTest extends PHPUnit_Framework_TestCase
             'select * from "table" where "foo" = ? or (COUNT(bar) < ? and ("cat" != ?))',
             $builder->toSql()
         );
-    }
+    }*/
 }
 
 class MockPDO extends PDO

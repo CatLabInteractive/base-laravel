@@ -81,7 +81,7 @@ class SelectQueryTransformer
     private static function translateParameter($laravelQueryBuilder, $parameter)
     {
         if ($parameter instanceof Raw) {
-            return $laravelQueryBuilder->raw($parameter->__toString());
+            return \DB::raw($parameter->__toString());
         } else {
             return $parameter;
         }
