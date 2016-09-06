@@ -6,7 +6,10 @@ use CatLab\Base\Interfaces\Database\SelectQueryParameters;
 use CatLab\Base\Interfaces\Database\WhereParameter;
 use CatLab\Base\Interfaces\Grammar\AndConjunction;
 use CatLab\Base\Interfaces\Grammar\OrConjunction;
+use CatLab\Base\Interfaces\Parameters\Raw;
 use Illuminate\Database\Query\Builder;
+
+use DB;
 
 /**
  * Class SelectQueryTransformer
@@ -23,7 +26,10 @@ class SelectQueryTransformer
         self::processWhereParameters($laravelQueryBuilder, $filter->getWhere());
 
         foreach ($filter->getSort() as $sort) {
-            $laravelQueryBuilder->orderBy($sort->getColumn(), $sort->getDirection());
+            $laravelQueryBuilder->orderBy(
+                self::translateParameter($sort->getColumn()),
+                $sort->getDirection()
+            );
         }
 
         if ($filter->getLimit()) {
@@ -46,7 +52,11 @@ class SelectQueryTransformer
         foreach ($whereParameters as $where) {
             /** @var Builder $query */
             if ($comparison = $where->getComparison()) {
-                $query->where($comparison->getSubject(), $comparison->getOperator(), $comparison->getValue());
+                $query->where(
+                    self::translateParameter($comparison->getSubject()),
+                    $comparison->getOperator(),
+                    self::translateParameter($comparison->getValue())
+                );
             }
 
             foreach ($where->getChildren() as $child) {
@@ -62,6 +72,19 @@ class SelectQueryTransformer
                     throw new \InvalidArgumentException("Got an unknown conjunction");
                 }
             }
+        }
+    }
+
+    /**
+     * @param $parameter
+     * @return mixed
+     */
+    private static function translateParameter($parameter)
+    {
+        if ($parameter instanceof Raw) {
+            return DB::raw($parameter->__toString());
+        } else {
+            return $parameter;
         }
     }
 }
