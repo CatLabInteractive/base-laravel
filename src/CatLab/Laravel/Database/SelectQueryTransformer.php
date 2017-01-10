@@ -2,12 +2,14 @@
 
 namespace CatLab\Laravel\Database;
 
+use CatLab\Base\Interfaces\Database\OrderParameter;
 use CatLab\Base\Interfaces\Database\SelectQueryParameters;
 use CatLab\Base\Interfaces\Database\WhereParameter;
 use CatLab\Base\Interfaces\Grammar\AndConjunction;
 use CatLab\Base\Interfaces\Grammar\OrConjunction;
 use CatLab\Base\Interfaces\Parameters\Raw;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 
 /**
  * Class SelectQueryTransformer
@@ -24,10 +26,21 @@ class SelectQueryTransformer
         self::processWhereParameters($laravelQueryBuilder, $filter->getWhere());
 
         foreach ($filter->getSort() as $sort) {
-            $laravelQueryBuilder->orderBy(
-                self::translateParameter($laravelQueryBuilder, $sort->getColumn()),
-                $sort->getDirection()
-            );
+
+            if ($laravelQueryBuilder instanceof Builder) {
+                $laravelQueryBuilder->orderBy(
+                    self::translateParameter($laravelQueryBuilder, $sort->getColumn()),
+                    $sort->getDirection()
+                );
+            } elseif ($laravelQueryBuilder instanceof Collection) {
+                if ($sort->getDirection() == OrderParameter::DESC) {
+                    $laravelQueryBuilder->sortByDesc($sort->getColumn());
+                } else {
+                    $laravelQueryBuilder->sortBy($sort->getColumn());
+                }
+            } else {
+                throw new \InvalidArgumentException("Collection not supported");
+            }
         }
 
         if ($filter->getLimit()) {
