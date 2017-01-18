@@ -9,6 +9,7 @@ use CatLab\Base\Interfaces\Grammar\AndConjunction;
 use CatLab\Base\Interfaces\Grammar\OrConjunction;
 use CatLab\Base\Interfaces\Parameters\Raw;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 
 /**
@@ -27,7 +28,10 @@ class SelectQueryTransformer
 
         foreach ($filter->getSort() as $sort) {
 
-            if ($laravelQueryBuilder instanceof Builder) {
+            if (
+                $laravelQueryBuilder instanceof Builder ||
+                $laravelQueryBuilder instanceof Relation
+            ) {
                 $laravelQueryBuilder->orderBy(
                     self::translateParameter($laravelQueryBuilder, $sort->getColumn()),
                     $sort->getDirection()
