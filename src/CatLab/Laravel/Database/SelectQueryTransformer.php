@@ -101,7 +101,7 @@ class SelectQueryTransformer
 
         switch ($operator) {
             case Operator::SEARCH:
-                $value .= '%' . $value . '%';
+                $value = '%' . $value . '%';
                 $operator = 'LIKE';
                 break;
         }
