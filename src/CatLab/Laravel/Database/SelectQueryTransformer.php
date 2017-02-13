@@ -2,10 +2,12 @@
 
 namespace CatLab\Laravel\Database;
 
+use CatLab\Base\Enum\Operator;
 use CatLab\Base\Interfaces\Database\OrderParameter;
 use CatLab\Base\Interfaces\Database\SelectQueryParameters;
 use CatLab\Base\Interfaces\Database\WhereParameter;
 use CatLab\Base\Interfaces\Grammar\AndConjunction;
+use CatLab\Base\Interfaces\Grammar\Comparison;
 use CatLab\Base\Interfaces\Grammar\OrConjunction;
 use CatLab\Base\Interfaces\Parameters\Raw;
 use Illuminate\Database\Query\Builder;
@@ -67,11 +69,7 @@ class SelectQueryTransformer
         foreach ($whereParameters as $where) {
             /** @var Builder $query */
             if ($comparison = $where->getComparison()) {
-                $query->where(
-                    self::translateParameter($query, $comparison->getSubject()),
-                    $comparison->getOperator(),
-                    self::translateParameter($query, $comparison->getValue())
-                );
+                self::processComparison($query, $comparison);
             }
 
             foreach ($where->getChildren() as $child) {
@@ -88,6 +86,27 @@ class SelectQueryTransformer
                 }
             }
         }
+    }
+
+    /**
+     * Process a single comparison
+     * @param $query
+     * @param Comparison $comparison
+     */
+    private static function processComparison($query, Comparison $comparison)
+    {
+        $subject = self::translateParameter($query, $comparison->getSubject());
+        $value = self::translateParameter($query, $comparison->getValue());
+        $operator = $comparison->getOperator();
+
+        switch ($operator) {
+            case Operator::SEARCH:
+                $value .= '%' . $value . '%';
+                $operator = 'LIKE';
+                break;
+        }
+
+        $query->where($subject, $operator, $value);
     }
 
     /**
