@@ -11,6 +11,7 @@ use CatLab\Base\Interfaces\Grammar\Comparison;
 use CatLab\Base\Interfaces\Grammar\OrConjunction;
 use CatLab\Base\Interfaces\Parameters\Raw;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 
@@ -32,6 +33,7 @@ class SelectQueryTransformer
 
             if (
                 $laravelQueryBuilder instanceof Builder ||
+                $laravelQueryBuilder instanceof EloquentBuilder ||
                 $laravelQueryBuilder instanceof Relation
             ) {
                 $laravelQueryBuilder->orderBy(
@@ -45,7 +47,7 @@ class SelectQueryTransformer
                     $laravelQueryBuilder->sortBy($sort->getColumn());
                 }
             } else {
-                throw new \InvalidArgumentException("Collection not supported");
+                throw new \InvalidArgumentException("Collection not supported: " . get_class($laravelQueryBuilder));
             }
         }
 
