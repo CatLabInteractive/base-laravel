@@ -35,7 +35,9 @@ class SelectQueryTransformerTest extends PHPUnit_Framework_TestCase
         );
 
         $builder = $this->getQueryBuilder();
-        SelectQueryTransformer::toLaravel($builder, $selectQuery);
+
+        $transformer = new SelectQueryTransformer();
+        $transformer->toLaravel($builder, $selectQuery);
 
         $this->assertEquals(
             'select * from "table" where "foo" = ? or ("bar" < ? and ("cat" != ?))',
@@ -60,7 +62,8 @@ class SelectQueryTransformerTest extends PHPUnit_Framework_TestCase
         );
 
         $builder = $this->getQueryBuilder();
-        SelectQueryTransformer::toLaravel($builder, $selectQuery);
+        $transformer = new SelectQueryTransformer();
+        $transformer->toLaravel($builder, $selectQuery);
 
         $this->assertEquals(
             'select * from "table" where "foo" LIKE ?',
