@@ -3,7 +3,7 @@
     "description": "Transformer between catlab base and laravel.",
     "type": "library",
     "require": {
-        "catlabinteractive/base": "^0.1"
+        "catlabinteractive/base": "^1.0.1"
     },
     "require-dev": {
         "laravel/framework": "5.2.*",

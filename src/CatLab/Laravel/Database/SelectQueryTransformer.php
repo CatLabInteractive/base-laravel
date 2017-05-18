@@ -10,6 +10,8 @@ use CatLab\Base\Interfaces\Grammar\AndConjunction;
 use CatLab\Base\Interfaces\Grammar\Comparison;
 use CatLab\Base\Interfaces\Grammar\OrConjunction;
 use CatLab\Base\Interfaces\Parameters\Raw;
+use CatLab\Laravel\Exceptions\UnexpectedEntity;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -22,10 +24,15 @@ use Illuminate\Support\Collection;
 class SelectQueryTransformer
 {
     /**
+     * @var string[]
+     */
+    protected $tableNames = [];
+
+    /**
      * @param Builder $laravelQueryBuilder
      * @param SelectQueryParameters $filter
      */
-    public static function toLaravel($laravelQueryBuilder, SelectQueryParameters $filter)
+    public function toLaravel($laravelQueryBuilder, SelectQueryParameters $filter)
     {
         self::processWhereParameters($laravelQueryBuilder, $filter->getWhere());
 
@@ -66,7 +73,7 @@ class SelectQueryTransformer
      * @param Builder $query
      * @param WhereParameter[] $whereParameters
      */
-    private static function processWhereParameters($query, $whereParameters)
+    protected function processWhereParameters($query, $whereParameters)
     {
         foreach ($whereParameters as $where) {
             /** @var Builder $query */
@@ -95,9 +102,9 @@ class SelectQueryTransformer
      * @param $query
      * @param Comparison $comparison
      */
-    private static function processComparison($query, Comparison $comparison)
+    protected function processComparison($query, Comparison $comparison)
     {
-        $subject = self::translateParameter($query, $comparison->getSubject());
+        $subject = self::translateColumnName($query, $comparison);
         $value = self::translateParameter($query, $comparison->getValue());
         $operator = $comparison->getOperator();
 
@@ -112,16 +119,72 @@ class SelectQueryTransformer
     }
 
     /**
+     * @param $query
+     * @param Comparison $column
+     * @return string
+     */
+    protected function translateColumnName($query, Comparison $column)
+    {
+        // Get subject contains the column name
+        $subject = $column->getSubject();
+
+        $entity = $column->getEntity();
+        if ($entity) {
+            $table = $this->resolveEntityTable($entity);
+            if ($table) {
+                $subject = $table . '.' . $subject;
+            }
+        }
+
+        return $subject;
+    }
+
+    /**
      * @param Builder $laravelQueryBuilder
      * @param $parameter
      * @return mixed
      */
-    private static function translateParameter($laravelQueryBuilder, $parameter)
+    protected function translateParameter($laravelQueryBuilder, $parameter)
     {
         if ($parameter instanceof Raw) {
             return \DB::raw($parameter->__toString());
         } else {
             return $parameter;
         }
+    }
+
+    /**
+     * Translate a parameter subject and translate it to the table name
+     * @param $subject
+     * @return string
+     */
+    protected function getEntityTable($subject)
+    {
+        if (!isset($this->tableNames[$subject])) {
+            $this->tableNames[$subject] = $this->resolveEntityTable($subject);
+        }
+
+        return $this->tableNames[$subject];
+    }
+
+    /**
+     * @param $subject
+     * @return string
+     * @throws UnexpectedEntity
+     */
+    protected function resolveEntityTable($subject)
+    {
+        if (class_exists($subject)) {
+            $model = new $subject;
+            if ($model instanceof Model) {
+                return $model->getTable();
+            } else {
+                throw UnexpectedEntity::make($subject);
+            }
+
+        } else {
+            return $subject;
+        }
+
     }
 }
