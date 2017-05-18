@@ -10,6 +10,7 @@ use CatLab\Base\Interfaces\Grammar\AndConjunction;
 use CatLab\Base\Interfaces\Grammar\Comparison;
 use CatLab\Base\Interfaces\Grammar\OrConjunction;
 use CatLab\Base\Interfaces\Parameters\Raw;
+use CatLab\Base\Models\Database\SortParameter;
 use CatLab\Laravel\Exceptions\UnexpectedEntity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
@@ -37,21 +38,20 @@ class SelectQueryTransformer
         self::processWhereParameters($laravelQueryBuilder, $filter->getWhere());
 
         foreach ($filter->getSort() as $sort) {
-
             if (
                 $laravelQueryBuilder instanceof Builder ||
                 $laravelQueryBuilder instanceof EloquentBuilder ||
                 $laravelQueryBuilder instanceof Relation
             ) {
                 $laravelQueryBuilder->orderBy(
-                    self::translateParameter($laravelQueryBuilder, $sort->getColumn()),
+                    $this->translateSortColumn($laravelQueryBuilder, $sort),
                     $sort->getDirection()
                 );
             } elseif ($laravelQueryBuilder instanceof Collection) {
                 if ($sort->getDirection() == OrderParameter::DESC) {
-                    $laravelQueryBuilder->sortByDesc($sort->getColumn());
+                    $laravelQueryBuilder->sortByDesc($this->translateSortColumn($laravelQueryBuilder, $sort));
                 } else {
-                    $laravelQueryBuilder->sortBy($sort->getColumn());
+                    $laravelQueryBuilder->sortBy($this->translateSortColumn($laravelQueryBuilder, $sort));
                 }
             } else {
                 throw new \InvalidArgumentException("Collection not supported: " . get_class($laravelQueryBuilder));
@@ -127,8 +127,35 @@ class SelectQueryTransformer
     {
         // Get subject contains the column name
         $subject = $column->getSubject();
+        if ($subject instanceof Raw) {
+            return \DB::raw($subject->__toString());
+        }
 
         $entity = $column->getEntity();
+        if ($entity) {
+            $table = $this->resolveEntityTable($entity);
+            if ($table) {
+                $subject = $table . '.' . $subject;
+            }
+        }
+
+        return $subject;
+    }
+
+    /**
+     * @param $query
+     * @param OrderParameter $parameter
+     * @return string
+     */
+    protected function translateSortColumn($query, OrderParameter $parameter)
+    {
+        // Get subject contains the column name
+        $subject = $parameter->getColumn();
+        if ($subject instanceof Raw) {
+            return \DB::raw($subject->__toString());
+        }
+
+        $entity = $parameter->getEntity();
         if ($entity) {
             $table = $this->resolveEntityTable($entity);
             if ($table) {
