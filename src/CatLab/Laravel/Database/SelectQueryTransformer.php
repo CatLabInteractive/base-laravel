@@ -155,11 +155,13 @@ class SelectQueryTransformer
             return \DB::raw($subject->__toString());
         }
 
-        $entity = $parameter->getEntity();
-        if ($entity) {
-            $table = $this->resolveEntityTable($entity);
-            if ($table) {
-                $subject = $table . '.' . $subject;
+        if (!str_contains($subject, '.')) {
+            $entity = $parameter->getEntity();
+            if ($entity) {
+                $table = $this->resolveEntityTable($entity);
+                if ($table) {
+                    $subject = $table . '.' . $subject;
+                }
             }
         }
 
