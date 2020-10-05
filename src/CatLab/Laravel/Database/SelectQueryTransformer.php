@@ -137,6 +137,11 @@ class SelectQueryTransformer
             if ($table) {
                 $subject = $table . '.' . $subject;
             }
+        } elseif (is_array($subject)) {
+            $table = $this->resolveEntityTable($subject[0]);
+            if ($table) {
+                $subject = $table . '.' . $subject[1];
+            }
         }
 
         return $subject;
